@@ -6,6 +6,12 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AppLayout from "./components/AppLayout";
 import DashboardPage from "./pages/DashboardPage";
+import TicketsPage from "./pages/TicketPage";
+import CreateTicketPage from "./pages/CreateTicketPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
+import CategoriesPage from "./pages/CategoriesPage";
+import NotificationsPage from "./pages/NotificationPage";
+import UsersPage from "./pages/UsersPage";
 
 function App() {
   return (
@@ -16,6 +22,12 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets/new" element={<CreateTicketPage />} />
+            <Route path="/tickets/:id" element={<TicketDetailPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
