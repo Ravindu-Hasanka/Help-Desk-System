@@ -2,6 +2,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "./App.css";
 import LandingPage from "./pages/landingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -25,8 +27,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<PlaceholderPage title="Sign In Coming Soon" />} />
-        <Route path="/register" element={<PlaceholderPage title="Registration Coming Soon" />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );
