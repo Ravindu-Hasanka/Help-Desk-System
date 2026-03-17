@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace HelpDeskSystem.Domain.Entities;
 
-namespace HelpDeskSystem.Domain.Entities
+public class Role
 {
-    internal class Role
-    {
-        public int RoleId { get; set; }
-        public string Name { get; set; }
-        public string? description { get; set; }
-        public ICollection<User> Users { get; set; } = new List<User>();
-    }
+    public int RoleId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

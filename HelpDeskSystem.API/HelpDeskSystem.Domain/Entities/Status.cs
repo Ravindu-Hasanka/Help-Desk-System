@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace HelpDeskSystem.Domain.Entities;
 
-namespace HelpDeskSystem.Domain.Entities
+public class Status
 {
-    internal class Status
-    {
-        public int StatusId { get; set; }
-        public string StatusName { get; set; } = null!;
-        public int DisplayOrder { get; set; }
-        public bool IsClosedStatus { get; set; } = false;
-
-        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
-    }
+    public int StatusId { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public int DisplayOrder { get; set; }
+    public bool IsClosedStatus { get; set; }
+    public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 }
