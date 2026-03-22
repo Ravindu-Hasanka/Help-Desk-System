@@ -1,4 +1,5 @@
-﻿using backend.Models;
+using backend.Dto;
+using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
@@ -30,10 +31,19 @@ namespace backend.Services
             return await query.ToListAsync();
         }
 
-        public async Task<User> Create(User user)
+        public async Task<User> Create(CreateUserDto userDto)
         {
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            user.CreatedAt = DateTime.UtcNow;
+            var user = new User
+            {
+                Name = userDto.Name,
+                Email = userDto.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(userDto.Password),
+                PhoneNo = userDto.PhoneNo,
+                Role = userDto.Role,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -41,7 +51,7 @@ namespace backend.Services
             return user;
         }
 
-        public async Task<User?> Update(int id, User updated)
+        public async Task<User?> Update(int id, UpdateUserDto updated)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -49,8 +59,10 @@ namespace backend.Services
                 return null;
 
             user.Name = updated.Name;
+            user.Email = updated.Email;
             user.PhoneNo = updated.PhoneNo;
             user.Role = updated.Role;
+            user.IsActive = updated.IsActive;
             user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

@@ -1,4 +1,4 @@
-﻿using backend.Dto;
+using backend.Dto;
 using backend.Models;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,23 +18,13 @@ namespace backend.Controllers
             _userService = userService;
         }
 
-        
         [HttpGet]
         public async Task<IActionResult> GetUsers(string? role, bool? isActive)
         {
             var users = await _userService.GetAll(role, isActive);
-
-            return Ok(users.Select(u => new
-            {
-                u.Id,
-                u.Email,
-                u.Name,
-                u.Role,
-                u.IsActive
-            }));
+            return Ok(users.Select(ToUserResponse));
         }
 
-        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
@@ -43,37 +33,27 @@ namespace backend.Controllers
             if (user == null)
                 return NotFound();
 
-            return Ok(new
-            {
-                user.Id,
-                user.Email,
-                user.Name,
-                user.Role,
-                user.IsActive
-            });
+            return Ok(ToUserResponse(user));
         }
 
-        
         [HttpPost]
-        public async Task<IActionResult> Create(User user)
+        public async Task<IActionResult> Create(CreateUserDto user)
         {
             var created = await _userService.Create(user);
-            return Ok(created);
+            return Ok(ToUserResponse(created));
         }
 
-        
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, User updated)
+        public async Task<IActionResult> Update(int id, UpdateUserDto updated)
         {
             var user = await _userService.Update(id, updated);
 
             if (user == null)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(ToUserResponse(user));
         }
 
-        
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateStatusDto dto)
         {
@@ -85,7 +65,6 @@ namespace backend.Controllers
             return Ok(new { message = "Status updated" });
         }
 
-
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -96,6 +75,20 @@ namespace backend.Controllers
 
             return Ok(new { message = "User deleted" });
         }
+
+        private static UserResponseDto ToUserResponse(User user)
+        {
+            return new UserResponseDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                PhoneNo = user.PhoneNo,
+                Role = user.Role.ToString(),
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
+        }
     }
 }
-        

@@ -23,6 +23,14 @@ export {
   getCategoryById,
   updateCategory,
 } from "./categories";
+export {
+  createUser,
+  deleteUser,
+  getUserById,
+  getUsers,
+  updateUser,
+  updateUserStatus,
+} from "./users";
 
 export { getMe, login, refresh } from "./auth";
 
@@ -31,6 +39,15 @@ export type {
   CategoryPayload,
   DeleteCategoryResponse,
 } from "./categories";
+export type {
+  CreateUserPayload,
+  DeleteUserResponse as DeleteUserApiResponse,
+  UpdateUserPayload,
+  UpdateUserStatusPayload,
+  User as ApiUser,
+  UserFilters,
+  UserRole,
+} from "./users";
 
 export type {
   AuthTokens,
