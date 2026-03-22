@@ -1,7 +1,8 @@
 import { LayoutDashboard, Ticket, Users, FolderOpen, Bell, Settings, LogOut, Shield } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import { cn } from "../lib/utils";
-import { currentUser, mockNotifications } from "../lib/mock-data";
+import { mockNotifications } from "../lib/mock-data";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -12,7 +13,24 @@ const navItems = [
 
 export default function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+
+  if (!user) {
+    return null;
+  }
+
+  const initials = user.name
+    .split(" ")
+    .map(namePart => namePart[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-60 flex-col border-r border-border bg-card">
@@ -77,13 +95,17 @@ export default function AppSidebar() {
       <div className="border-t border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-            {currentUser.fullName.split(' ').map(n => n[0]).join('')}
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{currentUser.fullName}</p>
-            <p className="truncate text-xs text-muted-foreground capitalize">{currentUser.role}</p>
+            <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
+            <p className="truncate text-xs text-muted-foreground capitalize">{user.role}</p>
           </div>
-          <button className="rounded-md p-1 text-muted-foreground transition-snappy hover:bg-muted hover:text-foreground">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md p-1 text-muted-foreground transition-snappy hover:bg-muted hover:text-foreground"
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>

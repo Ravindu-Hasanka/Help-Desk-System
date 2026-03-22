@@ -1,22 +1,43 @@
 import { Shield } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { getApiErrorMessage } from "../api";
+import { useAuth } from "../auth/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, isLoading, login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const redirectTo =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/dashboard";
+
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
     if (!email || !password) {
       setError("Please fill in all fields.");
       return;
     }
-    // Mock login — accept any email/password
-    navigate("/dashboard");
+
+    try {
+      setIsSubmitting(true);
+      await login({ email, password });
+      navigate(redirectTo, { replace: true });
+    } catch (loginError) {
+      setError(getApiErrorMessage(loginError));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -59,15 +80,16 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="........"
               className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <button
             type="submit"
-            className="block w-full rounded-md bg-primary py-2 text-center text-sm font-medium text-primary-foreground transition-snappy hover:bg-primary/90"
+            disabled={isSubmitting}
+            className="block w-full rounded-md bg-primary py-2 text-center text-sm font-medium text-primary-foreground transition-snappy hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Sign In
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
 

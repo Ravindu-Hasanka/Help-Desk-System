@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+using System.Security.Authentication;
+using System.Security.Claims;
 using backend.Dto;
 using backend.Models;
 using backend.Services;
@@ -31,20 +32,34 @@ namespace backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var (accessToken, refreshToken) = await _authService.Login(dto.Email, dto.Password);
-
-            return Ok(new
+            try
             {
-                accessToken,
-                refreshToken
-            });
+                var (accessToken, refreshToken) = await _authService.Login(dto.Email, dto.Password);
+
+                return Ok(new
+                {
+                    accessToken,
+                    refreshToken
+                });
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh(string refreshToken)
         {
-            var token = await _authService.RefreshToken(refreshToken);
-            return Ok(new { accessToken = token });
+            try
+            {
+                var token = await _authService.RefreshToken(refreshToken);
+                return Ok(new { accessToken = token });
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
 

@@ -1,5 +1,7 @@
-﻿using backend.Models;
+using System.Security.Authentication;
+using backend.Models;
 using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
 {
@@ -23,10 +25,10 @@ namespace backend.Services
 
         public async Task<(string accessToken, string refreshToken)> Login(string email, string password)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.Password))
-                throw new Exception("Invalid credentials");
+                throw new AuthenticationException("Invalid credentials");
 
             var accessToken = _jwt.GenerateAccessToken(user);
             var refreshToken = _jwt.GenerateRefreshToken(user);
@@ -41,10 +43,10 @@ namespace backend.Services
 
         public async Task<string> RefreshToken(string refreshToken)
         {
-            var user = _context.Users.FirstOrDefault(u => u.RefreshToken == refreshToken);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
 
             if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
-                throw new Exception("Invalid refresh token");
+                throw new AuthenticationException("Invalid refresh token");
 
             var newAccessToken = _jwt.GenerateAccessToken(user);
             return newAccessToken;
