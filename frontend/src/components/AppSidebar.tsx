@@ -1,4 +1,4 @@
-import { LayoutDashboard, Ticket, Users, FolderOpen, Bell, Settings, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Ticket, UserCheck, Users, FolderOpen, Bell, Settings, LogOut, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { cn } from "../lib/utils";
@@ -7,6 +7,7 @@ import { mockNotifications } from "../lib/mock-data";
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Tickets", icon: Ticket, path: "/tickets" },
+  { label: "My Tickets", icon: UserCheck, path: "/my-tickets" },
   { label: "Users", icon: Users, path: "/users" },
   { label: "Categories", icon: FolderOpen, path: "/categories" },
 ];

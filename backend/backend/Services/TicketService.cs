@@ -37,7 +37,7 @@ namespace backend.Services
             if (role == "User")
                 query = query.Where(t => t.CreatedByUserId == currentUserId);
 
-            if (role == "Agent")
+            if (role == "Agent" || role == "SupportAgent")
                 query = query.Where(t => t.AssignedToUserId == currentUserId);
 
 
@@ -83,6 +83,7 @@ namespace backend.Services
         public async Task<Ticket> Create(Ticket ticket, int userId)
         {
             ticket.CreatedByUserId = userId;
+            ticket.AssignedToUserId = userId;
             ticket.Status = Status.Open;
             ticket.CreatedAt = DateTime.UtcNow;
             ticket.TicketNumber = $"TKT-{DateTime.UtcNow.Ticks}";

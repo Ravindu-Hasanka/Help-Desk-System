@@ -25,6 +25,7 @@ function App() {
           <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/my-tickets" element={<TicketsPage view="mine" />} />
               <Route path="/tickets/new" element={<CreateTicketPage />} />
               <Route path="/tickets/:id" element={<TicketDetailPage />} />
               <Route path="/users" element={<UsersPage />} />

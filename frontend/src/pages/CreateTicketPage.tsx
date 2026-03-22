@@ -101,6 +101,10 @@ export default function CreateTicketPage() {
           </div>
         )}
 
+        <div className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+          New tickets are automatically assigned to the user who creates them.
+        </div>
+
         <div>
           <label className="text-sm font-medium text-foreground">Title</label>
           <input

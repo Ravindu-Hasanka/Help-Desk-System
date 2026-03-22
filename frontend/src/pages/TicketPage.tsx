@@ -5,8 +5,13 @@ import { getApiErrorMessage, getCategories, getTickets, getUsers, type ApiTicket
 import { useAuth } from "../auth/AuthContext";
 import { StatusBadge, PriorityBadge } from "../components/StatusBadge";
 
-export default function TicketsPage() {
+type TicketsPageProps = {
+  view?: "all" | "mine";
+};
+
+export default function TicketsPage({ view = "all" }: TicketsPageProps) {
   const { user } = useAuth();
+  const isMyTicketsView = view === "mine";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "all">("all");
@@ -36,6 +41,12 @@ export default function TicketsPage() {
 
   useEffect(() => {
     const loadTickets = async () => {
+      if (isMyTicketsView && !user?.id) {
+        setTickets([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setPageError("");
@@ -44,6 +55,7 @@ export default function TicketsPage() {
           search,
           status: statusFilter,
           priority: priorityFilter,
+          assignedTo: isMyTicketsView ? user?.id : undefined,
           pageSize: 100,
         });
 
@@ -56,7 +68,7 @@ export default function TicketsPage() {
     };
 
     void loadTickets();
-  }, [priorityFilter, search, statusFilter]);
+  }, [isMyTicketsView, priorityFilter, search, statusFilter, user?.id]);
 
   const getCategoryName = (categoryId: number) =>
     categories.find((category) => category.categoryId === categoryId)?.categoryName ?? `Category #${categoryId}`;
@@ -82,8 +94,12 @@ export default function TicketsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Tickets</h1>
-          <p className="text-sm text-muted-foreground">{tickets.length} tickets found</p>
+          <h1 className="text-xl font-semibold text-foreground">
+            {isMyTicketsView ? "My Tickets" : "Tickets"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isMyTicketsView ? `${tickets.length} tickets assigned to you` : `${tickets.length} tickets found`}
+          </p>
         </div>
         <Link
           to="/tickets/new"
@@ -105,7 +121,7 @@ export default function TicketsPage() {
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search tickets..."
+            placeholder={isMyTicketsView ? "Search your tickets..." : "Search tickets..."}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="h-9 w-full rounded-md border border-input bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"

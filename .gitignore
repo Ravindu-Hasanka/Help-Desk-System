@@ -85,6 +85,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.artifacts/
 
 # IDE
 .editorconfig.user
