@@ -75,6 +75,7 @@ namespace backend.Services
                 return false;
 
             _context.TicketComments.Remove(comment);
+            await _context.SaveChangesAsync();
 
             return true;
         }

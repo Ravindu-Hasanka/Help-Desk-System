@@ -32,6 +32,12 @@ export {
   updateUserStatus,
 } from "./users";
 export {
+  createTicketComment,
+  deleteTicketComment,
+  getTicketComments,
+  updateTicketComment,
+} from "./comments";
+export {
   assignTicket,
   createTicket,
   deleteTicket,
@@ -62,6 +68,11 @@ export type {
   UserFilters,
   UserRole,
 } from "./users";
+export type {
+  CreateTicketCommentPayload,
+  TicketComment as ApiTicketComment,
+  UpdateTicketCommentPayload,
+} from "./comments";
 export type {
   CreateTicketPayload,
   Ticket as ApiTicket,

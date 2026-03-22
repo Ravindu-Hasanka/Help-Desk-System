@@ -1,24 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Download, Paperclip, Save, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Download, Lock, MessageSquare, Paperclip, Pencil, Save, Send, Trash2, Upload, X } from "lucide-react";
 import AlertDialog from "../components/AlertDialog";
 import { useAuth } from "../auth/AuthContext";
 import {
   assignTicket,
+  createTicketComment,
   deleteTicket,
   deleteTicketAttachment,
+  deleteTicketComment,
   downloadTicketAttachment,
   getApiErrorMessage,
   getCategories,
   getTicketAttachments,
   getTicketById,
+  getTicketComments,
   getUsers,
   updateTicket,
+  updateTicketComment,
   updateTicketPriority,
   updateTicketStatus,
   uploadTicketAttachment,
   type ApiTicket,
   type ApiTicketAttachment,
+  type ApiTicketComment,
   type ApiUser,
   type Category,
   type TicketPriority,
@@ -32,6 +37,11 @@ type TicketFormState = {
   categoryId: string;
 };
 
+type CommentFormState = {
+  commentText: string;
+  isInternalNote: boolean;
+};
+
 export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,24 +51,36 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<ApiTicket | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
+  const [comments, setComments] = useState<ApiTicketComment[]>([]);
   const [attachments, setAttachments] = useState<ApiTicketAttachment[]>([]);
   const [form, setForm] = useState<TicketFormState>({
     title: "",
     description: "",
     categoryId: "",
   });
+  const [commentForm, setCommentForm] = useState<CommentFormState>({
+    commentText: "",
+    isInternalNote: false,
+  });
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isUpdatingPriority, setIsUpdatingPriority] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [updatingCommentId, setUpdatingCommentId] = useState<number | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [isDeletingTicket, setIsDeletingTicket] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<ApiTicketComment | null>(null);
   const [pageError, setPageError] = useState("");
   const [detailsError, setDetailsError] = useState("");
+  const [commentError, setCommentError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
 
   useEffect(() => {
@@ -73,15 +95,17 @@ export default function TicketDetailPage() {
         setIsLoading(true);
         setPageError("");
 
-        const [ticketResponse, categoriesResponse, attachmentsResponse, usersResponse] = await Promise.all([
+        const [ticketResponse, categoriesResponse, commentsResponse, attachmentsResponse, usersResponse] = await Promise.all([
           getTicketById(ticketId),
           getCategories(),
+          getTicketComments(ticketId),
           getTicketAttachments(ticketId),
           user?.role === "Admin" ? getUsers() : Promise.resolve([]),
         ]);
 
         setTicket(ticketResponse);
         setCategories(categoriesResponse);
+        setComments(commentsResponse);
         setAttachments(attachmentsResponse);
         setUsers(usersResponse);
         setForm({
@@ -98,6 +122,8 @@ export default function TicketDetailPage() {
 
     void loadPage();
   }, [ticketId, user?.role]);
+
+  const isStaffUser = user?.role !== "User";
 
   const getCategoryName = (categoryId: number) =>
     categories.find((category) => category.categoryId === categoryId)?.categoryName ?? `Category #${categoryId}`;
@@ -124,6 +150,7 @@ export default function TicketDetailPage() {
     ticket?.assignedToUserId !== null &&
     ticket?.assignedToUserId !== undefined &&
     assigneeOptions.some((assignee) => assignee.id === ticket.assignedToUserId);
+  const canManageComment = (comment: ApiTicketComment) => user?.id === comment.userId;
 
   const handleSaveDetails = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -251,6 +278,94 @@ export default function TicketDetailPage() {
     }
   };
 
+  const handleSubmitComment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setCommentError("");
+
+    if (!ticket || !commentForm.commentText.trim()) {
+      setCommentError("Comment text is required.");
+      return;
+    }
+
+    try {
+      setIsSubmittingComment(true);
+
+      const createdComment = await createTicketComment(ticket.id, {
+        commentText: commentForm.commentText,
+        isInternalNote: isStaffUser ? commentForm.isInternalNote : false,
+      });
+
+      setComments((currentComments) => [...currentComments, createdComment]);
+      setCommentForm({
+        commentText: "",
+        isInternalNote: false,
+      });
+    } catch (createError) {
+      setCommentError(getApiErrorMessage(createError));
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleStartEditComment = (comment: ApiTicketComment) => {
+    setCommentError("");
+    setEditingCommentId(comment.commentId);
+    setEditingCommentText(comment.commentText);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  const handleSaveComment = async (commentId: number) => {
+    if (!ticket || !editingCommentText.trim()) {
+      setCommentError("Comment text is required.");
+      return;
+    }
+
+    try {
+      setCommentError("");
+      setUpdatingCommentId(commentId);
+
+      const updatedComment = await updateTicketComment(ticket.id, commentId, {
+        commentText: editingCommentText,
+      });
+
+      setComments((currentComments) =>
+        currentComments.map((comment) => (comment.commentId === commentId ? updatedComment : comment)),
+      );
+      handleCancelEditComment();
+    } catch (updateError) {
+      setCommentError(getApiErrorMessage(updateError));
+    } finally {
+      setUpdatingCommentId(null);
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!ticket || !commentToDelete) {
+      return;
+    }
+
+    try {
+      setCommentError("");
+      setDeletingCommentId(commentToDelete.commentId);
+      await deleteTicketComment(ticket.id, commentToDelete.commentId);
+      setComments((currentComments) =>
+        currentComments.filter((comment) => comment.commentId !== commentToDelete.commentId),
+      );
+      if (editingCommentId === commentToDelete.commentId) {
+        handleCancelEditComment();
+      }
+      setCommentToDelete(null);
+    } catch (deleteError) {
+      setCommentError(getApiErrorMessage(deleteError));
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const handleDeleteTicket = async () => {
     if (!ticket) {
       return;
@@ -298,6 +413,17 @@ export default function TicketDetailPage() {
         onCancel={() => setShowDeleteDialog(false)}
         onConfirm={() => {
           void handleDeleteTicket();
+        }}
+      />
+      <AlertDialog
+        open={commentToDelete !== null}
+        title="Delete comment"
+        description="Are you sure you want to delete this comment?"
+        confirmLabel="Delete"
+        isConfirming={deletingCommentId !== null}
+        onCancel={() => setCommentToDelete(null)}
+        onConfirm={() => {
+          void handleDeleteComment();
         }}
       />
 
@@ -459,6 +585,160 @@ export default function TicketDetailPage() {
                     </div>
                   </div>
                 ))
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Comments</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">{comments.length} comments</span>
+            </div>
+
+            {commentError && (
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {commentError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitComment} className="space-y-3 rounded-md border border-border bg-background p-3">
+              <textarea
+                rows={4}
+                value={commentForm.commentText}
+                onChange={(event) =>
+                  setCommentForm((currentForm) => ({
+                    ...currentForm,
+                    commentText: event.target.value,
+                  }))
+                }
+                placeholder="Write a comment..."
+                className="block w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+
+              <div className="flex items-center justify-between gap-3">
+                {isStaffUser ? (
+                  <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={commentForm.isInternalNote}
+                      onChange={(event) =>
+                        setCommentForm((currentForm) => ({
+                          ...currentForm,
+                          isInternalNote: event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border border-input"
+                    />
+                    Internal note
+                  </label>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Comments are visible on the ticket timeline.</span>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingComment}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-snappy hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <Send className="h-4 w-4" />
+                  {isSubmittingComment ? "Posting..." : "Add Comment"}
+                </button>
+              </div>
+            </form>
+
+            <div className="space-y-3">
+              {comments.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+                  No comments yet.
+                </div>
+              ) : (
+                comments.map((comment) => {
+                  const isEditing = editingCommentId === comment.commentId;
+
+                  return (
+                    <div
+                      key={comment.commentId}
+                      className="space-y-3 rounded-md border border-border px-3 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">
+                              {getUserName(comment.userId)}
+                            </span>
+                            {comment.isInternalNote && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                <Lock className="h-3 w-3" />
+                                Internal
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(comment.createdAt).toLocaleString()}
+                            {comment.updatedAt ? ` | Edited ${new Date(comment.updatedAt).toLocaleString()}` : ""}
+                          </p>
+                        </div>
+
+                        {canManageComment(comment) && !isEditing && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditComment(comment)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-snappy hover:bg-muted hover:text-foreground"
+                              aria-label="Edit comment"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCommentToDelete(comment)}
+                              disabled={deletingCommentId === comment.commentId}
+                              className="rounded-md p-1.5 text-muted-foreground transition-snappy hover:bg-muted hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+                              aria-label="Delete comment"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <textarea
+                            rows={4}
+                            value={editingCommentText}
+                            onChange={(event) => setEditingCommentText(event.target.value)}
+                            className="block w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={handleCancelEditComment}
+                              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-snappy hover:bg-muted"
+                            >
+                              <X className="h-4 w-4" />
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleSaveComment(comment.commentId)}
+                              disabled={updatingCommentId === comment.commentId}
+                              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-snappy hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <Save className="h-4 w-4" />
+                              {updatingCommentId === comment.commentId ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap text-sm text-foreground">{comment.commentText}</p>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
