@@ -5,7 +5,7 @@ using backend.Models;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace backend.Controllers
 {
@@ -14,19 +14,27 @@ namespace backend.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
-        private readonly UserService _userService;
 
-        public AuthController(AuthService auth, UserService userService)
+        public AuthController(AuthService auth)
         {
             _authService = auth;
-            _userService = userService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(User user)
         {
-            await _authService.Register(user);
-            return Ok();
+            try
+            {
+                await _authService.Register(user);
+                return Ok();
+            }
+            catch (Exception ex) when (IsDatabaseUnavailable(ex))
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Database connection is unavailable. Update the backend connection string to a reachable PostgreSQL server and try again."
+                });
+            }
         }
 
         [HttpPost("login")]
@@ -46,6 +54,13 @@ namespace backend.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
+            catch (Exception ex) when (IsDatabaseUnavailable(ex))
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Database connection is unavailable. Update the backend connection string to a reachable PostgreSQL server and try again."
+                });
+            }
         }
 
         [HttpPost("refresh")]
@@ -60,31 +75,51 @@ namespace backend.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
+            catch (Exception ex) when (IsDatabaseUnavailable(ex))
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Database connection is unavailable. Update the backend connection string to a reachable PostgreSQL server and try again."
+                });
+            }
         }
 
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<IActionResult> Me()
+        public IActionResult Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var name = User.FindFirst(ClaimTypes.Name)?.Value ?? email;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var isActiveClaim = User.FindFirst("isActive")?.Value;
+            var isActive = !string.IsNullOrWhiteSpace(isActiveClaim)
+                ? bool.Parse(isActiveClaim)
+                : true;
 
-            if (userId == null)
-                return Unauthorized();
-
-            var user = await _userService.GetById(int.Parse(userId));
-
-            if (user == null)
-                return NotFound();
+            if (userId == null || email == null || name == null || role == null)
+                return Unauthorized(new { message = "Invalid token payload" });
 
             return Ok(new
             {
-                user.Id,
-                user.Email,
-                user.Name,
-                user.Role,
-                user.IsActive
+                Id = int.Parse(userId),
+                Email = email,
+                Name = name,
+                Role = role,
+                IsActive = isActive
             });
+        }
+
+        private static bool IsDatabaseUnavailable(Exception exception)
+        {
+            if (exception is NpgsqlException || exception is TimeoutException)
+                return true;
+
+            if (exception.InnerException != null)
+                return IsDatabaseUnavailable(exception.InnerException);
+
+            return false;
         }
     }
 }

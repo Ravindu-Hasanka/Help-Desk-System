@@ -21,11 +21,13 @@ export default function AppSidebar() {
     return null;
   }
 
-  const initials = user.name
+  const displayName = user.name?.trim() || user.email || "User";
+  const displayRole = user.role?.trim() || "User";
+  const initials = displayName
     .split(" ")
     .map(namePart => namePart[0]?.toUpperCase() ?? "")
     .join("")
-    .slice(0, 2);
+    .slice(0, 2) || "U";
 
   const handleLogout = () => {
     logout();
@@ -98,8 +100,8 @@ export default function AppSidebar() {
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground capitalize">{user.role}</p>
+            <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground capitalize">{displayRole}</p>
           </div>
           <button
             type="button"

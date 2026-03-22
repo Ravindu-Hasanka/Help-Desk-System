@@ -18,6 +18,14 @@ export type CurrentUser = {
   isActive: boolean;
 };
 
+type RawCurrentUser = {
+  id: number;
+  email: string;
+  name?: string | null;
+  role?: string | number | null;
+  isActive?: boolean | null;
+};
+
 export type RefreshAccessTokenResponse = {
   accessToken: string;
 };
@@ -32,6 +40,34 @@ export function refresh(refreshToken: string) {
   });
 }
 
-export function getMe() {
-  return apiGet<CurrentUser>("/auth/me");
+function normalizeRole(role: RawCurrentUser["role"]) {
+  switch (String(role ?? "").trim().toLowerCase()) {
+    case "1":
+    case "admin":
+      return "Admin";
+    case "2":
+    case "supportagent":
+    case "support agent":
+      return "SupportAgent";
+    case "3":
+    case "user":
+      return "User";
+    default:
+      return typeof role === "string" && role.trim() ? role.trim() : "User";
+  }
+}
+
+function normalizeCurrentUser(user: RawCurrentUser): CurrentUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name?.trim() || user.email,
+    role: normalizeRole(user.role),
+    isActive: user.isActive ?? true,
+  };
+}
+
+export async function getMe() {
+  const user = await apiGet<RawCurrentUser>("/auth/me");
+  return normalizeCurrentUser(user);
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 const string FrontendCorsPolicy = "FrontendCorsPolicy";
@@ -64,6 +65,36 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(async context =>
+    {
+        var exceptionFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var exception = exceptionFeature?.Error;
+
+        if (exception != null && IsDatabaseUnavailable(exception))
+        {
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            context.Response.ContentType = "application/json";
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "Database connection is unavailable. Update the backend connection string to a reachable PostgreSQL server and try again."
+            });
+
+            return;
+        }
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "An unexpected server error occurred."
+        });
+    });
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -79,3 +110,17 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static bool IsDatabaseUnavailable(Exception exception)
+{
+    if (exception is NpgsqlException || exception is TimeoutException)
+        return true;
+
+    if (exception is InvalidOperationException && exception.InnerException != null)
+        return IsDatabaseUnavailable(exception.InnerException);
+
+    if (exception.InnerException != null)
+        return IsDatabaseUnavailable(exception.InnerException);
+
+    return false;
+}
