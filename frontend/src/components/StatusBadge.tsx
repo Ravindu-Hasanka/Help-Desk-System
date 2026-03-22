@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import type { TicketStatus, TicketPriority } from "../lib/mock-data";
+import type { TicketPriority, TicketStatus } from "../api";
 
 const statusVariants = cva(
   "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
@@ -8,6 +8,7 @@ const statusVariants = cva(
       status: {
         open: "bg-[hsl(var(--status-open)/0.1)] text-status-open ring-[hsl(var(--status-open)/0.2)]",
         "in-progress": "bg-[hsl(var(--status-in-progress)/0.1)] text-status-in-progress ring-[hsl(var(--status-in-progress)/0.2)]",
+        pending: "bg-amber-100 text-amber-700 ring-amber-200",
         resolved: "bg-[hsl(var(--status-resolved)/0.1)] text-status-resolved ring-[hsl(var(--status-resolved)/0.2)]",
         closed: "bg-muted text-muted-foreground ring-border",
       },
@@ -32,6 +33,7 @@ const priorityVariants = cva(
 const statusLabels: Record<TicketStatus, string> = {
   open: "Open",
   "in-progress": "In Progress",
+  pending: "Pending",
   resolved: "Resolved",
   closed: "Closed",
 };

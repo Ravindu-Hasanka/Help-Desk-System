@@ -14,6 +14,9 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<AttachmentService>();
+builder.Services.AddScoped<CommentService>();
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>

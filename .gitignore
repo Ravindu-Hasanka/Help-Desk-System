@@ -53,12 +53,14 @@ project.assets.json
 project.lock.json
 *.nuget.props
 *.nuget.targets
+.dotnet/.dotnet/
 
 # Runtime
 appsettings.*.json
 !appsettings.Development.json
 !appsettings.json
 rpsettings.local.json
+backend/backend/uploads/
 
 # Database
 *.db

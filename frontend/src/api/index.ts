@@ -31,6 +31,20 @@ export {
   updateUser,
   updateUserStatus,
 } from "./users";
+export {
+  assignTicket,
+  createTicket,
+  deleteTicket,
+  deleteTicketAttachment,
+  downloadTicketAttachment,
+  getTicketAttachments,
+  getTicketById,
+  getTickets,
+  updateTicket,
+  updateTicketPriority,
+  updateTicketStatus,
+  uploadTicketAttachment,
+} from "./tickets";
 
 export { getMe, login, refresh } from "./auth";
 
@@ -48,6 +62,15 @@ export type {
   UserFilters,
   UserRole,
 } from "./users";
+export type {
+  CreateTicketPayload,
+  Ticket as ApiTicket,
+  TicketAttachment as ApiTicketAttachment,
+  TicketFilters,
+  TicketPriority,
+  TicketStatus,
+  UpdateTicketPayload,
+} from "./tickets";
 
 export type {
   AuthTokens,
