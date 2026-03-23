@@ -1,4 +1,4 @@
-import { mockNotifications, mockTickets } from "../lib/mock-data";
+import { mockNotifications } from "../lib/mock-data";
 import { Link } from "react-router-dom";
 import { Bell, Check } from "lucide-react";
 

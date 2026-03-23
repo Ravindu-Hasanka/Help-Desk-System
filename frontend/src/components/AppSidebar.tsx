@@ -1,4 +1,4 @@
-import { LayoutDashboard, Ticket, UserCheck, Users, FolderOpen, Bell, Settings, LogOut, Shield } from "lucide-react";
+import { FileText, LayoutDashboard, Ticket, UserCheck, Users, FolderOpen, Bell, Settings, LogOut, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { cn } from "../lib/utils";
@@ -10,6 +10,7 @@ const navItems = [
   { label: "My Tickets", icon: UserCheck, path: "/my-tickets" },
   { label: "Users", icon: Users, path: "/users" },
   { label: "Categories", icon: FolderOpen, path: "/categories" },
+  { label: "Reports", icon: FileText, path: "/reports" },
 ];
 
 export default function AppSidebar() {

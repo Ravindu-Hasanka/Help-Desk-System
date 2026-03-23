@@ -32,11 +32,21 @@ export {
   updateUserStatus,
 } from "./users";
 export {
+  getAgentPerformance,
+  getDashboardSummary,
+  getTicketsByCategory,
+  getTicketsByPriority,
+  getTicketsByStatus,
+} from "./dashboard";
+export {
   createTicketComment,
   deleteTicketComment,
   getTicketComments,
   updateTicketComment,
 } from "./comments";
+export {
+  getTicketReports,
+} from "./reports";
 export {
   assignTicket,
   createTicket,
@@ -69,10 +79,19 @@ export type {
   UserRole,
 } from "./users";
 export type {
+  AgentPerformanceItem,
+  DashboardChartItem,
+  DashboardSummary,
+} from "./dashboard";
+export type {
   CreateTicketCommentPayload,
   TicketComment as ApiTicketComment,
   UpdateTicketCommentPayload,
 } from "./comments";
+export type {
+  TicketReport as ApiTicketReport,
+  TicketReportFilters,
+} from "./reports";
 export type {
   CreateTicketPayload,
   Ticket as ApiTicket,

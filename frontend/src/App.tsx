@@ -12,6 +12,7 @@ import CreateTicketPage from "./pages/CreateTicketPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import NotificationsPage from "./pages/NotificationPage";
+import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
               <Route path="/tickets/:id" element={<TicketDetailPage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
         </Routes>

@@ -17,6 +17,8 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<AttachmentService>();
 builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
